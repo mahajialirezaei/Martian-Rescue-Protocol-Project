@@ -11,5 +11,18 @@ def get_input():
         travel_time.append(matrix_Time)
     return ship, B, C, source, dest, init_time, travel_time
 
+def heuristic(B, C, source, dest, init_time, travel_time):
+    h = []
+    for i in range(B):
+        base = init_time[i]
+        dest = min(travel_time[i])
+        h.append(base + dest)
 
-ship, B, C, source, dest, init_time, travel_time = get_input()
+    print(h)
+    return h
+
+
+
+if __name__ == '__main__':
+    ship, B, C, source, dest, init_time, travel_time = get_input()
+    h = heuristic(B, C, source, dest, init_time, travel_time)
