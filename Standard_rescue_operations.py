@@ -1,3 +1,14 @@
+from queue import PriorityQueue
+
+
+class State:
+    def __init__(self, ships, bases, colonies, time):
+        self.ships = ships
+        self.bases = bases
+        self.colonies = colonies
+        self.time = time
+
+
 def get_input():
     ship = int(input('Number of accessible Starships :'))
     B = int(input('Number of Space Stations on Earth :'))
@@ -11,18 +22,19 @@ def get_input():
         travel_time.append(matrix_Time)
     return ship, B, C, source, dest, init_time, travel_time
 
-def heuristic(B, C, source, dest, init_time, travel_time):
-    h = []
-    for i in range(B):
-        base = init_time[i]
-        dest = min(travel_time[i])
-        h.append(base + dest)
-
-    print(h)
-    return h
-
-
+def heuristic(state:State, init_time:list, travel_time):
+    h_estimated = []
+    for i, g in enumerate(state.bases):
+        if g > 0:
+            best_travel = min(travel_time[i])
+            h_estimated.append(init_time[i] + best_travel)
+    if h_estimated:
+        max_travel = max(h_estimated)
+    else:
+        max_travel = 0
+    return max_travel
 
 if __name__ == '__main__':
     ship, B, C, source, dest, init_time, travel_time = get_input()
     h = heuristic(B, C, source, dest, init_time, travel_time)
+    aStar(ship, B, C, source, dest, init_time, travel_time, h)
