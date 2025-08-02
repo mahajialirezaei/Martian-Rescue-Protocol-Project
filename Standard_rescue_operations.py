@@ -80,7 +80,15 @@ def aStar(ship, B, C, bases, colonies, init_time, travel_time):
     return None
 
 def reconstruct_travel_path(came_from, current):
-    pass
+    travel_path = []
+    while current in came_from:
+        prev, action = came_from[current]
+        travel_path.append(action)
+        current = prev
+    travel_path = list(reversed(travel_path))
+    return travel_path
+
+
 
 
 def possible_actions(state:State, init_time, travel_time):
