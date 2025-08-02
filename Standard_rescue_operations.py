@@ -106,8 +106,8 @@ def reconstruct_travel_path(came_from, current):
 
 def possible_actions(state:State, init_time, travel_time):
     actions = []
-    for ship_index, (loc, av) in enumerate(state.ships):
-        if av <= state.time:
+    for ship_index, (loc, arrive_time) in enumerate(state.ships):
+        if arrive_time <= state.time:
             for base_index, group in enumerate(state.bases[ship_index]):
                 if group > 0:
                     for colon_index, capacity in enumerate(state.colonies[ship_index]):
