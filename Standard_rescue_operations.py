@@ -84,8 +84,16 @@ def reconstruct_travel_path(came_from, current):
 
 
 def possible_actions(state:State, init_time, travel_time):
-    pass
+    actions = []
+    for ship_index, (loc, av) in enumerate(state.ships):
+        if av <= state.time:
+            for base_index, group in enumerate(state.bases[ship_index]):
+                if group > 0:
+                    for colon_index, capacity in enumerate(state.colonies[ship_index]):
+                        if capacity > 0:
+                            actions.append((ship_index, base_index, colon_index))
 
+    return actions
 
 if __name__ == '__main__':
     ship, B, C, bases, colonies, init_time, travel_time = get_input()
