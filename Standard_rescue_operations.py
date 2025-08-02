@@ -47,8 +47,21 @@ def heuristic(state:State, init_time:list, travel_time):
     return max_travel
 
 
-def apply_action(current, action, init_time, travel_time):
-    pass
+def apply_action(state:State, action, init_time, travel_time):
+    ship_index, base_index, colon_index = action
+    depart = max(state.time, state.ships[ship_index][1])
+    cost = init_time[ship_index] + travel_time[ship_index]
+    arrive_to_dest = depart + cost
+
+    new_ships = list(state.ships)
+    new_bases = list(state.bases)
+    new_colonies = list(state.colonies)
+    new_ships[ship_index] = ('col' + str(colon_index), arrive_to_dest)
+    new_bases[base_index] -= 1
+    new_colonies[colon_index] -= 1
+
+    new_state = State(new_ships, new_bases, new_colonies, arrive_to_dest)
+    return new_state
 
 
 def aStar(ship, B, C, bases, colonies, init_time, travel_time):
