@@ -1,26 +1,38 @@
 from queue import PriorityQueue
 
+from numpy.ma.core import negative
+
 
 class State:
     def __init__(self, ships, bases, colonies, time):
-        self.ships = ships
-        self.bases = bases
-        self.colonies = colonies
+        self.ships = tuple(ships)
+        self.bases = tuple(bases)
+        self.colonies = tuple(colonies)
         self.time = time
+
+    def __eq__(self, other):
+        return (self.ships, self.bases, self.colonies, self.time) == \
+               (other.ships, other.bases, other.colonies, other.time)
+
+    def __hash__(self):
+        return hash((self.ships, self.bases, self.colonies, self.time))
+
+    def __repr__(self):
+        return f"S(time={self.time}, bases={self.bases}, cols={self.colonies})"
 
 
 def get_input():
     ship = int(input('Number of accessible Starships :'))
     B = int(input('Number of Space Stations on Earth :'))
     C = int(input('Number of Residential Area on Mars :'))
-    source = list(map(int, input('Number of Passengers Groups :').split(' ')))
-    dest = list(map(int, input('Number of Capacity Residential Area :').split(' ')))
+    bases = list(map(int, input('Number of Passengers Groups :').split(' ')))
+    colonies = list(map(int, input('Number of Capacity Residential Area :').split(' ')))
     init_time = list(map(int, input('Number of Time Texas Space Stations :').split(' ')))
     travel_time = list()
     for i in range(B):
         matrix_Time = list(map(int, input('Matrix Time :').split(' ')))
         travel_time.append(matrix_Time)
-    return ship, B, C, source, dest, init_time, travel_time
+    return ship, B, C, bases, colonies, init_time, travel_time
 
 def heuristic(state:State, init_time:list, travel_time):
     h_estimated = []
@@ -34,7 +46,47 @@ def heuristic(state:State, init_time:list, travel_time):
         max_travel = 0
     return max_travel
 
+
+def apply_action(current, action, init_time, travel_time):
+    pass
+
+
+def aStar(ship, B, C, bases, colonies, init_time, travel_time):
+    start_ships = [('idle', 0) for x in range(ship)]
+    start = State(start_ships, bases=bases, colonies=colonies, time=0)
+
+
+    pq = PriorityQueue()
+    came_from = {}
+    g_score = {start: 0}
+    f_score = {start: heuristic(start, init_time, travel_time)}
+
+    pq.put((f_score[start], start))
+    while not pq.empty():
+        current_f, current = pq.get()
+        if sum(current.states) == 0:
+            return reconstruct_travel_path(came_from, current)
+
+        possible_acts = possible_actions(current, init_time, travel_time)
+        for action in possible_acts:
+            neigbor = apply_action(current, action, init_time, travel_time)
+
+
+            if neigbor not in g_score or neigbor.time < g_score[neigbor]:
+                came_from[neigbor] = (current, action)
+                g_score[neigbor] = neigbor.time
+                f_score[neigbor] = heuristic(neigbor, init_time, travel_time) + g_score[neigbor]
+                pq.put((f_score[neigbor], neigbor))
+    return None
+
+def reconstruct_travel_path(came_from, current):
+    pass
+
+
+def possible_actions(state:State, init_time, travel_time):
+    pass
+
+
 if __name__ == '__main__':
-    ship, B, C, source, dest, init_time, travel_time = get_input()
-    h = heuristic(B, C, source, dest, init_time, travel_time)
-    aStar(ship, B, C, source, dest, init_time, travel_time, h)
+    ship, B, C, bases, colonies, init_time, travel_time = get_input()
+    aStar(ship, B, C, bases, colonies, init_time, travel_time)
