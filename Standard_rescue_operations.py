@@ -58,6 +58,19 @@ class Scheduler:
         return max(est) - max(times)
 
 
+    def search(self) -> State:
+        init_times = [0] * self.num_ships
+        init_tasks_done = [False] * self.num_tasks
+        init_h = self.heuristic(init_tasks_done, init_times)
+        init_state = State(times=init_times, tasks_done=init_tasks_done, g = 0, f = init_h)
+        search_heap = []
+        heapq.heappush(search_heap, init_state)
+        watched = {}
+
+        while search_heap:
+            pass
+
+
     def reconstruct(self, end_state: State) -> List[Tuple[int, int]]:
         path = []
         s = end_state
