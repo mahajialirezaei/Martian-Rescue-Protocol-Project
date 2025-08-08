@@ -94,7 +94,7 @@ class Scheduler:
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
 
-    def reconstruct(self, end_state: State) -> List[Tuple[int, int]]:
+    def reconstruct(self, end_state: State) -> List[State]:
         path = []
         s = end_state
         while s.previous:
@@ -102,6 +102,26 @@ class Scheduler:
             s = s.previous
         return list(reversed(path))
 
+    def print_schedule_with_stages(self, end_state: State):
+        schedule = self.reconstruct(end_state)
+        base_to_colon = self.jobs
+        texas_to_base = self.setup
+        num_ships = self.num_ships
+
+        current_times = [0.0] * num_ships
+        detailed = []
+        for step, (ship_idx, task_id) in enumerate(schedule):
+            base_idx, colon_idx, travel = base_to_colon[task_id]
+            service = texas_to_base[base_idx] + travel
+            start = current_times[ship_idx]
+            end = start + service
+            current_times[ship_idx] = end
+            detailed.append((ship_idx, task_id, base_idx, colon_idx, service, start, end))
+
+        detailed.sort(key= lambda x:x[5])
+        for step, detail in enumerate(detailed):
+            ship_idx, task_id, base_idx, colon_idx, service, start, end = detail
+            print(f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
 
 
 if __name__ == '__main__':
@@ -118,7 +138,5 @@ if __name__ == '__main__':
     scheduler = Scheduler(num_ships, base_to_colon, to_base)
     end_state = scheduler.search()
 
-    print('Makespan:', end_state.g)
-    for ship_idx, task_id in scheduler.reconstruct(end_state):
-        base_idx, colon_idx, _ = base_to_colon[task_id]
-        print(f"ship_{ship_idx} -> base_{base_idx} -> colon_{colon_idx}")
+    print('endTime:', end_state.g)
+    scheduler.print_schedule_with_stages(end_state)
