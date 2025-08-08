@@ -20,6 +20,9 @@ class State:
     def __lt__(self, other):
         return self.f < other.f
 
+    def __str__(self):
+        return str(self.times) + str(self.tasks_done) + str(self.g) + str(self.f) + str(self.previous) + '\n'
+
 
 def get_input():
     num_ships = int(input())
@@ -58,7 +61,7 @@ class Scheduler:
         return max(est) - max(times)
 
 
-    def search(self) -> State:
+    def search(self):
         init_times = [0] * self.num_ships
         init_tasks_done = [False] * self.num_tasks
         init_h = self.heuristic(init_tasks_done, init_times)
@@ -79,7 +82,7 @@ class Scheduler:
             for tsk_id in range(self.num_tasks):
                 if cur.tasks_done[tsk_id]:
                     continue
-                base, colon, t = cur.jobs[tsk_id]
+                base, colon, t = self.jobs[tsk_id]
                 service = self.setup[base] + t
                 for sh in range(self.num_ships):
                     new_time = cur.times.copy()
