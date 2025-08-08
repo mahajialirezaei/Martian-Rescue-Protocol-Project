@@ -48,7 +48,7 @@ class Scheduler:
         self.service_times = [self.setup[base] + t for base, colon, t in self.jobs]
 
     def heuristic(self, tasks_done: List[bool], times: List[float]) -> float:
-        rem = [self.service_times[i] for i, done in enumerate(tasks_done) if done]
+        rem = [self.service_times[i] for i, done in enumerate(tasks_done) if not done]
         if not rem:
             return 0
 
