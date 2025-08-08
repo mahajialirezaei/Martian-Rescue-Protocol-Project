@@ -68,8 +68,28 @@ class Scheduler:
         watched = {}
 
         while search_heap:
-            pass
+            cur = heapq.heappop(search_heap)
+            if all(cur.tasks_done):
+                return cur
+            key = (tuple(cur.tasks_done), tuple(cur.times))
+            if key in watched.keys() and watched[key] < cur.g:
+                continue
+            watched[key] = cur.g
 
+            for tsk_id in range(self.num_tasks):
+                if cur.tasks_done[tsk_id]:
+                    continue
+                base, colon, t = cur.jobs[tsk_id]
+                service = self.setup[base] + t
+                for sh in range(self.num_ships):
+                    new_time = cur.times.copy()
+                    new_time[sh] += service
+                    new_tasks_done = cur.tasks_done.copy()
+                    new_tasks_done[tsk_id] = True
+                    new_g = max(cur.g, new_time[sh])
+                    h = self.heuristic(new_tasks_done, new_time)
+                    new_state = State(new_time, new_tasks_done, new_g, new_g + h, previous=cur, action=(sh, tsk_id))
+                    heapq.heappush(search_heap, new_state)
 
     def reconstruct(self, end_state: State) -> List[Tuple[int, int]]:
         path = []
@@ -87,9 +107,9 @@ if __name__ == '__main__':
     tasks: List[Tuple[int,int,int]] = []
     for b in range(num_bases):
         for _ in range(base[b]):
-            c_best = min(range(num_colons), key=lambda c: travel_matrix[b][c])
-            tasks.append((b, c_best, travel_matrix[b][c_best]))
-            capacities[c_best] -= 1
+            best_colon = min(range(num_colons), key=lambda c: travel_matrix[b][c])
+            tasks.append((b, best_colon, travel_matrix[b][best_colon]))
+            capacities[best_colon] -= 1
     base_to_colon = tasks
 
     scheduler = Scheduler(num_ships, base_to_colon, to_base)
