@@ -8,12 +8,14 @@ class State:
                  tasks_done: List[bool],
                  g: float,
                  f: float,
+                 task_completion_times: List[float] = None,
                  previous=None,
                  action=None):
         self.times = times
         self.tasks_done = tasks_done
         self.g = g
         self.f = f
+        self.task_completion_times = task_completion_times
         self.previous = previous
         self.action = action
 
@@ -64,12 +66,11 @@ class Scheduler:
 
         return max(est) - max(times)
 
-
     def search(self):
         init_times = [0] * self.num_ships
         init_tasks_done = [False] * self.num_tasks
         init_h = self.heuristic(init_tasks_done, init_times)
-        init_state = State(times=init_times, tasks_done=init_tasks_done, g = 0, f = init_h)
+        init_state = State(times=init_times, tasks_done=init_tasks_done, g=0, f=init_h)
         search_heap = []
         heapq.heappush(search_heap, init_state)
         watched = {}
@@ -126,8 +127,10 @@ class Scheduler:
                             break
                     if violates:
                         continue
-
-                    new_state = State(new_time, new_tasks_done, new_g, new_g + h, previous=cur, action=(sh, tsk_id))
+                    new_task_completion_times = cur.task_completion_times.copy()
+                    new_task_completion_times[tsk_id] = new_time[sh]
+                    new_state = State(new_time, new_tasks_done, new_g, new_g + h, new_task_completion_times,
+                                      previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
 
     def reconstruct(self, end_state: State) -> List[State]:
@@ -154,10 +157,11 @@ class Scheduler:
             current_times[ship_idx] = end
             detailed.append((ship_idx, task_id, base_idx, colon_idx, service, start, end))
 
-        detailed.sort(key= lambda x:x[5])
+        detailed.sort(key=lambda x: x[5])
         for step, detail in enumerate(detailed):
             ship_idx, task_id, base_idx, colon_idx, service, start, end = detail
-            print(f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
+            print(
+                f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
 
 
 def priority_deadLine_base(deadLine):
@@ -172,8 +176,9 @@ def priority_deadLine_base(deadLine):
 
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
-    num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
-    tasks: List[Tuple[int,int,int]] = []
+    num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
+    3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+    tasks: List[Tuple[int, int, int]] = []
     non_deadline_bases, deadLine_bases = priority_deadLine_base()
     for b, dl in deadLine_bases:
         for _ in range(base[b]):
