@@ -41,13 +41,15 @@ class Scheduler:
                  num_ships: int,
                  base_to_colon: List[Tuple[int, int, float]],
                  texas_to_base: List[float],
-                 deadLine):
-
+                 deadLine,
+                 num_bases):
         self.num_ships = num_ships
         self.jobs = base_to_colon
         self.setup = texas_to_base
         self.num_tasks = len(self.jobs)
         self.service_times = [self.setup[base] + t for base, colon, t in self.jobs]
+        self.deadline = deadLine
+        self.num_bases = num_bases
 
     def heuristic(self, tasks_done: List[bool], times: List[float]) -> float:
         rem = [self.service_times[i] for i, done in enumerate(tasks_done) if not done]
@@ -93,6 +95,38 @@ class Scheduler:
                     new_tasks_done[tsk_id] = True
                     new_g = max(cur.g, new_time[sh])
                     h = self.heuristic(new_tasks_done, new_time)
+
+                    violates = False
+
+                    remaining_service_per_base = {b: [] for b in range(self.num_bases)}
+                    for idx, done in enumerate(new_tasks_done):
+                        if not done:
+                            b, colon, travel = self.jobs[idx]
+                            remaining_service_per_base[b].append(self.setup[b] + travel)
+
+                    cur_completion_per_base = {b: 0 for b in range(self.num_bases)}
+                    for idx, done in enumerate(new_tasks_done):
+                        if done:
+                            b, colon, travel = self.jobs[idx]
+                            pass
+
+                    for b in range(self.num_bases):
+                        if self.deadline[b] == -1:
+                            continue
+                        est = sorted(new_time)
+
+                        for serv in sorted(remaining_service_per_base[b]):
+                            i = 0
+                            est[0] += serv
+                            est.sort()
+
+                        optimistic_completion = max(est)
+                        if optimistic_completion > self.deadline[b]:
+                            violates = True
+                            break
+                    if violates:
+                        continue
+
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
 
