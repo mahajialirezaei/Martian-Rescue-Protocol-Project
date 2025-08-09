@@ -40,7 +40,8 @@ class Scheduler:
     def __init__(self,
                  num_ships: int,
                  base_to_colon: List[Tuple[int, int, float]],
-                 texas_to_base: List[float]):
+                 texas_to_base: List[float],
+                 deadLine):
 
         self.num_ships = num_ships
         self.jobs = base_to_colon
@@ -125,18 +126,36 @@ class Scheduler:
             print(f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
 
 
+def priority_deadLine_base(deadLine):
+    non_deadline_bases, deadLine_bases = [], []
+    for i, x in enumerate(deadLine):
+        if x == -1:
+            non_deadline_bases.append(i)
+        else:
+            deadLine_bases.append(tuple([i, x]))
+    return non_deadline_bases, deadLine_bases
+
+
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
     tasks: List[Tuple[int,int,int]] = []
-    for b in range(num_bases):
+    non_deadline_bases, deadLine_bases = priority_deadLine_base()
+    for b, dl in deadLine_bases:
         for _ in range(base[b]):
             best_colon = min(range(num_colons), key=lambda c: travel_matrix[b][c])
             tasks.append((b, best_colon, travel_matrix[b][best_colon]))
             capacities[best_colon] -= 1
+
+    for b in non_deadline_bases:
+        for _ in range(base[b]):
+            best_colon = min(range(num_colons), key=lambda c: travel_matrix[b][c])
+            tasks.append((b, best_colon, travel_matrix[b][best_colon]))
+            capacities[best_colon] -= 1
+
     base_to_colon = tasks
 
-    scheduler = Scheduler(num_ships, base_to_colon, to_base)
+    scheduler = Scheduler(num_ships, base_to_colon, to_base, deadLine)
     end_state = scheduler.search()
 
     print('endTime:', end_state.g)
