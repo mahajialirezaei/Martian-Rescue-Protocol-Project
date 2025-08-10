@@ -94,10 +94,19 @@ class Scheduler:
                     new_time[sh] += service
                     new_tasks_done = cur.tasks_done.copy()
                     new_tasks_done[tsk_id] = True
+
+                    new_task_completion_times = cur.task_completion_times.copy()
+                    new_task_completion_times[tsk_id] = new_time[sh]
+
                     new_g = max(cur.g, new_time[sh])
                     h = self.heuristic(new_tasks_done, new_time)
 
-                    violates = False
+                    cur_completion_per_base = {b: 0 for b in range(self.num_bases)}
+                    for idx, complete in enumerate(new_task_completion_times):
+                        if complete is not None:
+                            b, colon, travel = self.jobs[idx]
+                            if complete > cur_completion_per_base[b]:
+                                cur_completion_per_base[b] = complete
 
                     remaining_service_per_base = {b: [] for b in range(self.num_bases)}
                     for idx, done in enumerate(new_tasks_done):
@@ -105,30 +114,38 @@ class Scheduler:
                             b, colon, travel = self.jobs[idx]
                             remaining_service_per_base[b].append(self.setup[b] + travel)
 
-                    cur_completion_per_base = {b: 0 for b in range(self.num_bases)}
-                    for idx, done in enumerate(new_tasks_done):
-                        if done:
-                            b, colon, travel = self.jobs[idx]
-                            pass
+                    violates = False
 
                     for b in range(self.num_bases):
-                        if self.deadline[b] == -1:
+                        dl = self.deadline[b]
+                        if dl == -1:
                             continue
-                        est = sorted(new_time)
+
+
+                        cur_comp = cur_completion_per_base[b]
+
+                        rem = remaining_service_per_base[b]
+                        if not rem:
+                            if cur_comp > dl:
+                                violates = True
+                                break
+                        else:
+                            continue
+
+                        est_ship_time = sorted(new_time)
 
                         for serv in sorted(remaining_service_per_base[b]):
-                            i = 0
-                            est[0] += serv
-                            est.sort()
+                            est_ship_time[0] += serv
+                            est_ship_time.sort()
 
-                        optimistic_completion = max(est)
+                        optimistic_completion = max(cur_comp, max(est_ship_time))
                         if optimistic_completion > self.deadline[b]:
                             violates = True
                             break
+
                     if violates:
                         continue
-                    new_task_completion_times = cur.task_completion_times.copy()
-                    new_task_completion_times[tsk_id] = new_time[sh]
+
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, new_task_completion_times,
                                       previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
@@ -177,7 +194,7 @@ def priority_deadLine_base(deadLine):
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
-    3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
     tasks: List[Tuple[int, int, int]] = []
     non_deadline_bases, deadLine_bases = priority_deadLine_base()
     for b, dl in deadLine_bases:
