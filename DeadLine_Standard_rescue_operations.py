@@ -191,6 +191,13 @@ def priority_deadLine_base(deadLine):
     return non_deadline_bases, deadLine_bases
 
 
+def give_best_colon_for_base(capacities, num_colons, b):
+    candidates = [c for c in range(num_colons) if capacities[c] > 0]
+    if not candidates:
+        raise Exception('no capacities available')
+
+    return min(candidates, key=lambda c: travel_matrix[b][c])
+
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
@@ -199,13 +206,13 @@ if __name__ == '__main__':
     non_deadline_bases, deadLine_bases = priority_deadLine_base()
     for b, dl in deadLine_bases:
         for _ in range(base[b]):
-            best_colon = min(range(num_colons), key=lambda c: travel_matrix[b][c])
+            best_colon = give_best_colon_for_base(capacities, num_colons, b)
             tasks.append((b, best_colon, travel_matrix[b][best_colon]))
             capacities[best_colon] -= 1
 
     for b in non_deadline_bases:
         for _ in range(base[b]):
-            best_colon = min(range(num_colons), key=lambda c: travel_matrix[b][c])
+            best_colon = give_best_colon_for_base(capacities, num_colons, b)
             tasks.append((b, best_colon, travel_matrix[b][best_colon]))
             capacities[best_colon] -= 1
 
