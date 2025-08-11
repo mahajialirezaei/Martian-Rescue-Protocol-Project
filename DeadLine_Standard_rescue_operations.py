@@ -153,7 +153,7 @@ class Scheduler:
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, new_task_completion_times,
                                       previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
-
+        raise Exception('No Answer For This Conditions')
     def reconstruct(self, end_state: State) -> List[State]:
         path = []
         s = end_state
@@ -205,7 +205,7 @@ def give_best_colon_for_base(capacities, num_colons, b):
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
-        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 400], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 12], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
     tasks: List[Tuple[int, int, int]] = []
     non_deadline_bases, deadLine_bases = priority_deadLine_base(deadLine)
     for b, dl in deadLine_bases:
