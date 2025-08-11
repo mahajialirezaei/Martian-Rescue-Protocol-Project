@@ -133,17 +133,17 @@ class Scheduler:
                             if cur_comp > dl:
                                 violates = True
                                 break
-                        else:
-                            continue
+                            else:
+                                continue
 
                         est_ship_time = sorted(new_time)
 
-                        for serv in sorted(remaining_service_per_base[b]):
+                        for serv in sorted(rem, reverse=True):
                             est_ship_time[0] += serv
                             est_ship_time.sort()
 
                         optimistic_completion = max(cur_comp, max(est_ship_time))
-                        if optimistic_completion > self.deadline[b]:
+                        if optimistic_completion > dl:
                             violates = True
                             break
 
