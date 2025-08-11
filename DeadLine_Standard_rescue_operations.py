@@ -201,9 +201,9 @@ def give_best_colon_for_base(capacities, num_colons, b):
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
-        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 400], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
     tasks: List[Tuple[int, int, int]] = []
-    non_deadline_bases, deadLine_bases = priority_deadLine_base()
+    non_deadline_bases, deadLine_bases = priority_deadLine_base(deadLine)
     for b, dl in deadLine_bases:
         for _ in range(base[b]):
             best_colon = give_best_colon_for_base(capacities, num_colons, b)
