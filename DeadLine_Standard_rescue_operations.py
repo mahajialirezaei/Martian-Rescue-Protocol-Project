@@ -15,7 +15,11 @@ class State:
         self.tasks_done = tasks_done
         self.g = g
         self.f = f
-        self.task_completion_times = task_completion_times
+        if task_completion_times is None:
+            self.task_completion_times = [None] * len(tasks_done)
+        else:
+            self.task_completion_times = task_completion_times
+
         self.previous = previous
         self.action = action
 
@@ -129,17 +133,17 @@ class Scheduler:
                             if cur_comp > dl:
                                 violates = True
                                 break
-                        else:
-                            continue
+                            else:
+                                continue
 
                         est_ship_time = sorted(new_time)
 
-                        for serv in sorted(remaining_service_per_base[b]):
+                        for serv in sorted(rem, reverse=True):
                             est_ship_time[0] += serv
                             est_ship_time.sort()
 
                         optimistic_completion = max(cur_comp, max(est_ship_time))
-                        if optimistic_completion > self.deadline[b]:
+                        if optimistic_completion > dl:
                             violates = True
                             break
 
@@ -149,7 +153,7 @@ class Scheduler:
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, new_task_completion_times,
                                       previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
-
+        raise Exception('No Answer For This Conditions')
     def reconstruct(self, end_state: State) -> List[State]:
         path = []
         s = end_state
@@ -201,9 +205,9 @@ def give_best_colon_for_base(capacities, num_colons, b):
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
-        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 12], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
     tasks: List[Tuple[int, int, int]] = []
-    non_deadline_bases, deadLine_bases = priority_deadLine_base()
+    non_deadline_bases, deadLine_bases = priority_deadLine_base(deadLine)
     for b, dl in deadLine_bases:
         for _ in range(base[b]):
             best_colon = give_best_colon_for_base(capacities, num_colons, b)
@@ -218,7 +222,7 @@ if __name__ == '__main__':
 
     base_to_colon = tasks
 
-    scheduler = Scheduler(num_ships, base_to_colon, to_base, deadLine)
+    scheduler = Scheduler(num_ships, base_to_colon, to_base, deadLine, num_bases)
     end_state = scheduler.search()
 
     print('endTime:', end_state.g)
