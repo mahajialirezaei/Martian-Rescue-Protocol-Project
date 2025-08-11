@@ -15,7 +15,11 @@ class State:
         self.tasks_done = tasks_done
         self.g = g
         self.f = f
-        self.task_completion_times = task_completion_times
+        if task_completion_times is None:
+            self.task_completion_times = [None] * len(tasks_done)
+        else:
+            self.task_completion_times = task_completion_times
+
         self.previous = previous
         self.action = action
 
@@ -218,7 +222,7 @@ if __name__ == '__main__':
 
     base_to_colon = tasks
 
-    scheduler = Scheduler(num_ships, base_to_colon, to_base, deadLine)
+    scheduler = Scheduler(num_ships, base_to_colon, to_base, deadLine, num_bases)
     end_state = scheduler.search()
 
     print('endTime:', end_state.g)
