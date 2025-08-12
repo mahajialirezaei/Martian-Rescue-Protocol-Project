@@ -2,6 +2,15 @@ import heapq
 from typing import List, Tuple, Dict
 
 
+class Ship:
+    def __init__(self, previous_state, current_state=None):
+        self.previous_state = previous_state
+        self.current_state = current_state
+    def set_previous_state(self, previous_state):
+        self.previous_state = previous_state
+    def set_current_state(self, current_state):
+        self.current_state = current_state
+
 class State:
     def __init__(self,
                  times: List[float],
