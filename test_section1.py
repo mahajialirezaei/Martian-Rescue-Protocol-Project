@@ -1,6 +1,6 @@
 import unittest
 from typing import List, Tuple
-from Standard_rescue_operations import give_best_colon_for_base, Scheduler  # فرض اسم فایل شما
+from Standard_rescue_operations import give_best_colon_for_base, Scheduler
 
 class TestSection1Manual(unittest.TestCase):
     def test_case_1_project_example(self):
