@@ -139,7 +139,7 @@ class Scheduler:
             ship_idx, task_id, base_idx, colon_idx, service, start, end = detail
             print(f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
 
-def give_best_colon_for_base(capacities, num_colons, b):
+def give_best_colon_for_base(capacities, num_colons, b, travel_matrix):
     candidates = [c for c in range(num_colons) if capacities[c] > 0]
     if not candidates:
         raise Exception('no capacities available')
