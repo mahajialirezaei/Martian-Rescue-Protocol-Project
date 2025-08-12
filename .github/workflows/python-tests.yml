@@ -2,16 +2,15 @@ name: Python Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, Fix-Issues ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, Fix-Issues ]
 
 jobs:
-  build:
+  run-tests:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -25,4 +24,4 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --maxfail=1 --disable-warnings -q
+          pytest -q
