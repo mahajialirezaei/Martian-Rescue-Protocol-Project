@@ -5,15 +5,8 @@ from DeadLine_Standard_rescue_operations import *
 MODULE_NAME = "Standard_rescue_operations"
 
 
-def import_module():
-    try:
-        return importlib.import_module(MODULE_NAME)
-    except Exception as e:
-        raise ImportError(f"Could not import module '{MODULE_NAME}': {e}")
-
-
-def best_colon_call(sro, caps, num_colons, b, travel_matrix):
-    fn = getattr(sro, "give_best_colon_for_base", None)
+def best_colon_call(caps, num_colons, b, travel_matrix):
+    fn = give_best_colon_for_base
     if fn is None:
         raise AttributeError("Module does not provide give_best_colon_for_base")
     try:
@@ -22,7 +15,7 @@ def best_colon_call(sro, caps, num_colons, b, travel_matrix):
         return fn(caps, num_colons, b)
 
 
-def make_scheduler(sro, num_ships, tasks, to_base, deadLine, travel_matrix):
+def make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix):
     try:
         return Scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
     except Exception as e:
@@ -37,17 +30,14 @@ def run_search(scheduler, travel_matrix):
         return scheduler.search(travel_matrix)
 
 
-class DeadlinesTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.sro = import_module()
+class TestSection2Manual(unittest.TestCase):
 
     def build_tasks(self, num_bases, num_colons, base, capacities, travel_matrix):
         caps = capacities.copy()
         tasks: List[Tuple[int, int, int]] = []
         for b in range(num_bases):
             for _ in range(base[b]):
-                best = best_colon_call(self.sro, caps, num_colons, b, travel_matrix)
+                best = best_colon_call(caps, num_colons, b, travel_matrix)
                 tasks.append((b, best, travel_matrix[b][best]))
                 caps[best] -= 1
         return tasks
@@ -78,7 +68,7 @@ class DeadlinesTests(unittest.TestCase):
         travel_matrix = [[3, 1], [2, 2]]
         deadLine = [-1, 4]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
-        sched = make_scheduler(self.sro, num_ships, tasks, to_base, deadLine, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         print(sched)
 
         self.assert_infeasible_or_none(sched, travel_matrix)
@@ -91,7 +81,7 @@ class DeadlinesTests(unittest.TestCase):
         travel_matrix = [[1, 2, 3], [2, 1, 1], [3, 2, 1]]
         deadLine = [-1, -1, 4]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
-        sched = make_scheduler(self.sro, num_ships, tasks, to_base, deadLine, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         self.assert_search_makespan(sched, travel_matrix, expected=5)
 
     def test3_five_bases_deadline_base2(self):
@@ -108,7 +98,7 @@ class DeadlinesTests(unittest.TestCase):
         ]
         deadLine = [-1, -1, 3, -1, -1]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
-        sched = make_scheduler(self.sro, num_ships, tasks, to_base, deadLine, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         self.assert_search_makespan(sched, travel_matrix, expected=4)
 
     def test4_project_example_impossible(self):
@@ -123,7 +113,7 @@ class DeadlinesTests(unittest.TestCase):
         ]
         deadLine = [-1, -1, 10]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
-        sched = make_scheduler(self.sro, num_ships, tasks, to_base, deadLine, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         self.assert_infeasible_or_none(sched, travel_matrix)
 
     def test5_two_ships_deadline_on_base1(self):
@@ -138,7 +128,7 @@ class DeadlinesTests(unittest.TestCase):
         ]
         deadLine = [-1, 7, -1]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
-        sched = make_scheduler(self.sro, num_ships, tasks, to_base, deadLine, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         self.assert_search_makespan(sched, travel_matrix, expected=6)
 
 
