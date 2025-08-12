@@ -2,27 +2,23 @@ import heapq
 from typing import List, Tuple, Dict
 
 
-class Ship:
-    def __init__(self, previous_state, current_state=None):
-        self.previous_state = previous_state
-        self.current_state = current_state
-    def set_previous_state(self, previous_state):
-        self.previous_state = previous_state
-    def set_current_state(self, current_state):
-        self.current_state = current_state
-
 class State:
     def __init__(self,
                  times: List[float],
                  tasks_done: List[bool],
                  g: float,
                  f: float,
+                 ship_previous_colons: List[int] = None,
                  previous=None,
                  action=None):
         self.times = times
         self.tasks_done = tasks_done
         self.g = g
         self.f = f
+        if ship_previous_colons is None:
+            self.ship_prev_colons = [-1] * len(times)
+        else:
+            self.ship_previous_colons = ship_previous_colons
         self.previous = previous
         self.action = action
 
@@ -30,7 +26,9 @@ class State:
         return self.f < other.f
 
     def __str__(self):
-        return str(self.times) + str(self.tasks_done) + str(self.g) + str(self.f) + str(self.previous) + '\n'
+        return (str(self.times) + '\n'
+                + str(self.tasks_done) + '\n' + str(self.g) + str(self.f) + '\n' + str(
+                    self.ship_previous_colon) + '\n' + str(self.previous) + '\n')
 
 
 def get_input():
@@ -69,12 +67,12 @@ class Scheduler:
 
         return max(est) - max(times)
 
-
-    def search(self):
+    def search(self, matrix_time: list[list]):
         init_times = [0] * self.num_ships
         init_tasks_done = [False] * self.num_tasks
+        init_ship_prev = [-1] * num_ships
         init_h = self.heuristic(init_tasks_done, init_times)
-        init_state = State(times=init_times, tasks_done=init_tasks_done, g = 0, f = init_h)
+        init_state = State(times=init_times, tasks_done=init_tasks_done, g=0, f=init_h)
         search_heap = []
         heapq.heappush(search_heap, init_state)
         watched = {}
@@ -83,7 +81,7 @@ class Scheduler:
             cur = heapq.heappop(search_heap)
             if all(cur.tasks_done):
                 return cur
-            key = (tuple(cur.tasks_done), tuple(cur.times))
+            key = (tuple(cur.tasks_done), tuple(cur.times), tuple(cur.ship_previous_colons))
             if key in watched.keys() and watched[key] < cur.g:
                 continue
             watched[key] = cur.g
@@ -92,17 +90,24 @@ class Scheduler:
                 if cur.tasks_done[tsk_id]:
                     continue
                 base, colon, t = self.jobs[tsk_id]
-                service = self.setup[base] + t
                 for sh in range(self.num_ships):
                     new_time = cur.times.copy()
-                    new_time[sh] += service
                     new_tasks_done = cur.tasks_done.copy()
                     new_tasks_done[tsk_id] = True
+                    new_prev = cur.ship_previous_colons.copy()
+                    prev_colon = new_prev[sh]
+                    if prev_colon == -1:
+                        added = self.setup[base] + t
+                    else:
+                        added = matrix_time[base][prev_colon] + t
+
+                    new_time[sh] += added
+                    new_prev[sh] = colon
                     new_g = max(cur.g, new_time[sh])
                     h = self.heuristic(new_tasks_done, new_time)
                     new_state = State(new_time, new_tasks_done, new_g, new_g + h, previous=cur, action=(sh, tsk_id))
                     heapq.heappush(search_heap, new_state)
-
+        raise Exception('No solution found for this conditions')
     def reconstruct(self, end_state: State) -> List[State]:
         path = []
         s = end_state
@@ -127,10 +132,11 @@ class Scheduler:
             current_times[ship_idx] = end
             detailed.append((ship_idx, task_id, base_idx, colon_idx, service, start, end))
 
-        detailed.sort(key= lambda x:x[5])
+        detailed.sort(key=lambda x: x[5])
         for step, detail in enumerate(detailed):
             ship_idx, task_id, base_idx, colon_idx, service, start, end = detail
-            print(f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
+            print(
+                f"step: {step}, ship_idx: {ship_idx}, base_idx: {base_idx}, colon_idx: {colon_idx}, start: {start}, end: {end}")
 
 
 def give_best_colon_for_base(capacities, num_colons, b):
@@ -143,8 +149,11 @@ def give_best_colon_for_base(capacities, num_colons, b):
 
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = get_input()
-    num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = (3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
-    tasks: List[Tuple[int,int,int]] = []
+    num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = (
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [[6, 7, 8], [10, 9, 2], [6, 3, 7]])
+
+
+    tasks: List[Tuple[int, int, int]] = []
     for b in range(num_bases):
         for _ in range(base[b]):
             best_colon = give_best_colon_for_base(capacities, num_colons, b)
@@ -153,7 +162,7 @@ if __name__ == '__main__':
     base_to_colon = tasks
 
     scheduler = Scheduler(num_ships, base_to_colon, to_base)
-    end_state = scheduler.search()
+    end_state = scheduler.search(travel_matrix)
 
     print('endTime:', end_state.g)
     scheduler.print_schedule_with_stages(end_state)
