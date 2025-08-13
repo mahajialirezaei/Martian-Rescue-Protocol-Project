@@ -156,7 +156,7 @@ if __name__ == '__main__':
     tasks: List[Tuple[int, int, int]] = []
     for b in range(num_bases):
         for _ in range(base[b]):
-            best_colon = give_best_colon_for_base(capacities, num_colons, b)
+            best_colon = give_best_colon_for_base(capacities, num_colons, b, travel_matrix)
             tasks.append((b, best_colon, travel_matrix[b][best_colon]))
             capacities[best_colon] -= 1
     base_to_colon = tasks

@@ -71,7 +71,7 @@ class TestSection2Manual(unittest.TestCase):
         sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
         print(sched)
 
-        self.assert_infeasible_or_none(sched, travel_matrix)
+        self.assert_search_makespan(sched, travel_matrix, expected=5)
 
     def test2_three_ships_base2_deadline(self):
         num_ships, num_bases, num_colons = 3, 3, 3
@@ -114,7 +114,7 @@ class TestSection2Manual(unittest.TestCase):
         deadLine = [-1, -1, 10]
         tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
         sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
-        self.assert_infeasible_or_none(sched, travel_matrix)
+        self.assert_search_makespan(sched, travel_matrix, expected=34)
 
     def test5_two_ships_deadline_on_base1(self):
         num_ships, num_bases, num_colons = 2, 3, 3
