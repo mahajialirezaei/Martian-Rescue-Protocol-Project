@@ -9,7 +9,7 @@ class State:
                  g: float,
                  f: float,
                  ship_prev_colons: Optional[List[int]] = None,
-                 task_completion_times: Optional[List[Optional[float]]] = None,
+                 task_boarding_times: Optional[List[Optional[float]]] = None,
                  previous=None,
                  action=None):
         self.times = times
@@ -20,10 +20,10 @@ class State:
             self.ship_prev_colons = [-1] * len(times)
         else:
             self.ship_prev_colons = ship_prev_colons
-        if task_completion_times is None:
-            self.task_completion_times = [None] * len(tasks_done)
+        if task_boarding_times is None:
+            self.task_boarding_times = [None] * len(tasks_done)
         else:
-            self.task_completion_times = task_completion_times
+            self.task_boarding_times = task_boarding_times
         self.previous = previous
         self.action = action
 
@@ -100,12 +100,12 @@ class Scheduler:
         init_times = [0.0] * self.num_ships
         init_tasks_done = [False] * self.num_tasks
         init_ship_prev = [-1] * self.num_ships
-        init_task_completion_times = [None] * self.num_tasks
+        init_task_boarding_times = [None] * self.num_tasks
         init_h = self.heuristic(init_tasks_done, init_times)
         init_state = State(times=init_times, tasks_done=init_tasks_done,
                            g=0.0, f=init_h,
                            ship_prev_colons=init_ship_prev,
-                           task_completion_times=init_task_completion_times)
+                           task_boarding_times=init_task_boarding_times)
 
         ok, msg = self.check_deadlines_feasible_initial()
         if not ok:
@@ -118,17 +118,15 @@ class Scheduler:
 
         while heap:
             cur = heapq.heappop(heap)
-            # goal test
             if all(cur.tasks_done):
                 return cur
 
             key = (tuple(cur.tasks_done), tuple(cur.times), tuple(cur.ship_prev_colons),
-                   tuple(cur.task_completion_times))
+                   tuple(cur.task_boarding_times))
             if key in watched and watched[key] <= cur.g:
                 continue
             watched[key] = cur.g
 
-            # expand
             for tsk_id in range(self.num_tasks):
                 if cur.tasks_done[tsk_id]:
                     continue
@@ -138,63 +136,61 @@ class Scheduler:
                     new_tasks_done = cur.tasks_done.copy()
                     new_tasks_done[tsk_id] = True
                     new_prev = cur.ship_prev_colons.copy()
-                    new_task_completion = cur.task_completion_times.copy()
-
+                    start = cur.times[sh]
                     prev_col = new_prev[sh]
                     if prev_col == -1:
                         added = self.setup[base] + travel
+                        start += self.setup[base]
                     else:
-                        # cost = return from prev_col to base's "dock" and then to new colon (rule)
-                        # we use matrix_time[base][prev_col] + travel
                         added = self.matrix_time[base][prev_col] + travel
+                        start += self.matrix_time[base][prev_col]
 
+                    new_task_boarding = cur.task_boarding_times.copy()
                     new_times[sh] += added
                     new_prev[sh] = colon
-                    new_task_completion[tsk_id] = new_times[sh]
+                    new_task_boarding[tsk_id] = start
 
                     new_g = max(cur.g, new_times[sh])
                     h = self.heuristic(new_tasks_done, new_times)
 
-                    # Deadline pruning (optimistic)
-                    # compute current completion per base from new_task_completion
-                    cur_completion_per_base = {b: 0.0 for b in range(self.num_bases)}
-                    for tidx, comp in enumerate(new_task_completion):
-                        if comp is not None:
+                    cur_boarding_per_base = {b: 0.0 for b in range(self.num_bases)}
+                    for tidx, board in enumerate(new_task_boarding):
+                        if board is not None:
                             bidx, _, _ = self.jobs[tidx]
-                            if comp > cur_completion_per_base[bidx]:
-                                cur_completion_per_base[bidx] = comp
+                            if board > cur_boarding_per_base[bidx]:
+                                cur_boarding_per_base[bidx] = board
 
-                    # remaining minimal services per base (optimistic per-task)
                     remaining_min_services = {b: [] for b in range(self.num_bases)}
                     for tidx, done in enumerate(new_tasks_done):
                         if not done:
                             bidx, _, trav = self.jobs[tidx]
-                            # optimistic minimal service for this task:
                             min_return = min(self.matrix_time[bidx])
                             min_serv = trav + min(self.setup[bidx], min_return)
                             remaining_min_services[bidx].append(min_serv)
 
                     violates = False
-                    # For each base with deadline, check if optimistic completion > dl
                     for b in range(self.num_bases):
                         dl = self.deadline[b]
                         if dl == -1:
                             continue
-                        cur_comp = cur_completion_per_base[b]
+                        cur_boarding = cur_boarding_per_base[b]
                         rem = remaining_min_services[b]
                         if not rem:
-                            if cur_comp > dl:
+                            if cur_boarding > dl:
                                 violates = True
                                 break
                             else:
                                 continue
-                        # optimistic assignment of rem to current ship times
                         est_ships = sorted(new_times)
+                        boarding_times_for_b = []
+
                         for serv in sorted(rem, reverse=True):
+                            earliest = est_ships[0]
+                            boarding_times_for_b.append(earliest)
                             est_ships[0] += serv
                             est_ships.sort()
-                        optimistic_completion = max(cur_comp, max(est_ships))
-                        if optimistic_completion > dl:
+                        optimistic_boarding_completion = max(cur_boarding, max(boarding_times_for_b))
+                        if optimistic_boarding_completion > dl:
                             violates = True
                             break
 
@@ -204,11 +200,10 @@ class Scheduler:
                     new_state = State(times=new_times, tasks_done=new_tasks_done,
                                       g=new_g, f=new_g + h,
                                       ship_prev_colons=new_prev,
-                                      task_completion_times=new_task_completion,
+                                      task_boarding_times=new_task_boarding,
                                       previous=cur, action=(sh, tsk_id))
                     heapq.heappush(heap, new_state)
 
-        # no solution found
         return None
 
     def reconstruct(self, end_state: State) -> List[Tuple[int, int]]:
@@ -255,7 +250,7 @@ def give_best_colon_for_base(capacities, num_colons, b, travel_matrix):
 if __name__ == '__main__':
     # num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = get_input()
     num_ships, num_bases, num_colons, base, capacities, to_base, deadLine, travel_matrix = (
-        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 15], [[6, 7, 8], [10, 9, 2], [6, 3, 7]]
+        3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]]
     )
 
     # build tasks (respect colony capacities)
