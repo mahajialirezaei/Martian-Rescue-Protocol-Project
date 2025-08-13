@@ -87,5 +87,24 @@ class TestSection1Manual(unittest.TestCase):
         self.assertIsNotNone(end_state, "No schedule found for test_case_5")
         self.assertEqual(4, int(end_state.g), msg=f"Expected 5, got {end_state.g}")
 
+
+    def test_case_6_five_bases_three_ships(self):
+        num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = (
+        4, 4, 4, [1, 3, 3, 4], [4, 4, 1, 4], [7, 4, 9, 2],
+        [[6, 7, 8, 3], [10, 9, 2, 4], [6, 3, 7, 5], [6, 7, 8, 9]])
+
+        caps = capacities.copy()
+        tasks: List[Tuple[int, int, int]] = []
+        for b in range(num_bases):
+            for _ in range(base[b]):
+                best_colon = give_best_colon_for_base(caps, num_colons, b, travel_matrix)
+                tasks.append((b, best_colon, travel_matrix[b][best_colon]))
+                caps[best_colon] -= 1
+        scheduler = Scheduler(num_ships, tasks, to_base, matrix_time=travel_matrix)
+        end_state = scheduler.search()
+        self.assertIsNotNone(end_state, "No schedule found for test_case_5")
+        self.assertEqual(24, int(end_state.g), msg=f"Expected 24, got {end_state.g}")
+
+
 if __name__ == '__main__':
     unittest.main()
