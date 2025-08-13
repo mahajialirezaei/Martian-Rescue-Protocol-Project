@@ -132,5 +132,27 @@ class TestSection2Manual(unittest.TestCase):
         self.assert_search_makespan(sched, travel_matrix, expected=6)
 
 
+    def test6_three_ships_deadline_on_base3(self):
+        num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = (
+            3, 5, 3, [1,1,1,1,1], [2,2,1], [2,1,2,1,2],
+            [[1,3,4],[2,1,3],[3,2,1],[1,2,2],[2,1,1]]
+        )
+        deadLine = [-1, -1, -1, -1, -1]
+        tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
+        self.assert_search_makespan(sched, travel_matrix, expected=4)
+
+
+    def test7_four_ships_deadline_on_base4(self):
+        num_ships, num_bases, num_colons, base, capacities, to_base, travel_matrix = (
+        4, 4, 4, [1, 3, 3, 4], [4, 4, 1, 4], [7, 4, 9, 2],
+        [[6, 7, 8, 3], [10, 9, 2, 4], [6, 3, 7, 5], [6, 7, 8, 9]])
+        deadLine = [-1, -1, -1, -1]
+        tasks = self.build_tasks(num_bases, num_colons, base, capacities, travel_matrix)
+        sched = make_scheduler(num_ships, tasks, to_base, deadLine, travel_matrix)
+        self.assert_search_makespan(sched, travel_matrix, expected=24)
+
+
+
 if __name__ == "__main__":
     unittest.main()
