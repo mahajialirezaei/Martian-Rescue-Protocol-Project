@@ -41,11 +41,9 @@ class Scheduler:
         self.num_tasks = len(self.jobs)
         self.matrix_time = matrix_time
 
-        # lower-bound service for each job (admissible heuristic component):
-        # min possible for a job = min(setup[base], min(matrix_time[base])) + travel
         self.min_service = []
         for (b, c, travel) in self.jobs:
-            min_return = min(self.matrix_time[b])  # min travel from base b to any colon (as prev)
+            min_return = min(self.matrix_time[b])
             self.min_service.append(min(self.setup[b], min_return) + travel)
 
     def heuristic(self, tasks_done: List[bool], times: List[float]) -> float:
@@ -75,7 +73,6 @@ class Scheduler:
             if all(cur.tasks_done):
                 return cur
             key = (tuple(cur.tasks_done), tuple(cur.times), tuple(cur.ship_previous_colons))
-            # use <= to prune equal-or-worse states (optional)
             if key in watched and watched[key] <= cur.g:
                 continue
             watched[key] = cur.g
@@ -93,7 +90,6 @@ class Scheduler:
                     if prev_colon == -1:
                         added = self.setup[base] + travel
                     else:
-                        # return from previous colon then go to new colon (rule you specified)
                         added = self.matrix_time[base][prev_colon] + travel
 
                     new_time[sh] += added

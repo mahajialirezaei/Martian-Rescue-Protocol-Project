@@ -253,7 +253,6 @@ if __name__ == '__main__':
         3, 3, 3, [1, 3, 3], [4, 4, 1], [7, 4, 9], [-1, -1, 10], [[6, 7, 8], [10, 9, 2], [6, 3, 7]]
     )
 
-    # build tasks (respect colony capacities)
     tasks: List[Tuple[int, int, int]] = []
     caps = capacities.copy()
     for b in range(num_bases):
